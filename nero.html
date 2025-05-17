@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroPrompt | AI Prompt Optimizer</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- GSAP Core -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+<!-- GSAP ScrollTrigger (for scroll-based animations) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['"Inter"', 'system-ui', 'sans-serif'],
+                        'display': ['"Space Grotesk"', 'sans-serif'],
+                        'mono': ['"JetBrains Mono"', 'monospace']
+                    },
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        neuro: {
+                            purple: '#8b5cf6',
+                            pink: '#ec4899',
+                            blue: '#3b82f6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <style>
+        :root {
+            --neuro-gradient: linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #3b82f6 100%);
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+        
+        .neuro-gradient-text {
+            background: var(--neuro-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .neuro-gradient-bg {
+            background: var(--neuro-gradient);
+        }
+        
+        .neuro-gradient-border {
+            position: relative;
+            border: 1px solid transparent;
+            border-radius: 0.5rem;
+        }
+        
+        .neuro-gradient-border::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            border-radius: 0.5rem;
+            padding: 1px;
+            background: var(--neuro-gradient);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        
+        .prompt-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .prompt-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .glow-effect {
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+        }
+        
+        .btn-neuro {
+            background: var(--neuro-gradient);
+            color: white;
+            font-weight: 600;
+            border: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-neuro:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-neuro::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .btn-neuro:hover::after {
+            opacity: 1;
+        }
+        
+        .form-control-custom {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control-custom:focus {
+            background: rgba(15, 23, 42, 0.9);
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 0.25rem rgba(139, 92, 246, 0.25);
+        }
+        
+        .badge-platform {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+        }
+        
+        .badge-tone {
+            background: rgba(236, 72, 153, 0.15);
+            color: #ec4899;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .tooltip-inner {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            font-size: 0.875rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+        }
+        
+        .bs-tooltip-auto[data-popper-placement^=top] .tooltip-arrow::before,
+        .bs-tooltip-top .tooltip-arrow::before {
+            border-top-color: #1e293b;
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="antialiased">
+<!-- Fixed Responsive Navigation -->
+<nav class="navbar navbar-expand-lg fixed-top neuro-navbar" aria-label="Main navigation">
+  <div class="container">
+    <!-- Brand Logo -->
+    <a class="navbar-brand d-flex align-items-center" href="#" aria-label="NeuroPrompt Home">
+      <div class="me-2 p-2 rounded-md brand-icon">
+        <i class="fas fa-brain text-white" aria-hidden="true"></i>
+      </div>
+      <span class="font-display text-xl lg-text-2xl font-bold neuro-gradient-text">NeuroPrompt</span>
+    </a>
+
+    <!-- Toggle Button - Corrected classes -->
+    <button class="navbar-toggler border-0 shadow-none px-2" type="button" 
+            data-bs-toggle="collapse" data-bs-target="#navbarCollapse" 
+            aria-controls="navbarCollapse" aria-expanded="false" 
+            aria-label="Toggle navigation">
+      <i class="fas fa-bars text-white fs-4" aria-hidden="true"></i>
+    </button>
+
+    <!-- Navigation Content -->
+    <div class="collapse navbar-collapse" id="navbarCollapse">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" href="#" aria-current="page">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">Examples</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">Pricing</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">Resources</a>
+        </li>
+      </ul>
+
+      <div class="d-flex gap-2">
+        <a href="#" class="btn btn-outline-light" role="button">Login</a>
+        <a href="#" class="btn btn-neuro" role="button">Sign Up Free</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<style>
+  :root {
+    --neuro-bg-color: rgba(15, 23, 42, 0.98);
+    --neuro-text-opacity: 0.8;
+    --neuro-transition: all 0.2s ease;
+  }
+  
+  /* Navigation Base Styles */
+  .neuro-navbar {
+    background: var(--neuro-bg-color);
+    backdrop-filter: blur(10px);
+    z-index: 1030;
+    padding: 0.75rem 0;
+  }
+  
+  /* Brand Styles */
+  .brand-icon {
+    background: var(--neuro-gradient);
+  }
+  
+  .navbar-brand {
+    transition: var(--neuro-transition);
+  }
+  
+  .navbar-brand:hover {
+    opacity: 0.9;
+  }
+  
+  /* Toggler Button Fix */
+  .navbar-toggler {
+    display: none; /* Hidden by default */
+  }
+  
+  /* Navigation Links */
+  .nav-link {
+    position: relative;
+    color: rgba(255, 255, 255, var(--neuro-text-opacity)) !important;
+    transition: var(--neuro-transition);
+    padding: 0.5rem 1rem !important;
+  }
+  
+  .nav-link:hover,
+  .nav-link:focus,
+  .nav-link.active {
+    color: white !important;
+    outline: none;
+  }
+  
+  .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 5px;
+    height: 5px;
+    background: var(--neuro-gradient);
+    border-radius: 50%;
+  }
+  
+  /* Desktop Styles (lg and up) */
+  @media (min-width: 992px) {
+    .neuro-navbar {
+      padding: 1rem 0;
+    }
+    
+    .lg-text-2xl {
+      font-size: 1.5rem !important;
+    }
+    
+    /* Hide toggler on desktop */
+    .navbar-toggler {
+      display: none !important;
+    }
+    
+    /* Force show menu on desktop */
+    .navbar-collapse {
+      display: flex !important;
+      flex-basis: auto;
+    }
+  }
+  
+  /* Mobile Styles */
+  @media (max-width: 991.98px) {
+    /* Show toggler on mobile */
+    .navbar-toggler {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* Mobile menu styling */
+    .navbar-collapse {
+      background: var(--neuro-bg-color);
+      backdrop-filter: blur(10px);
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-top: 1rem;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    
+    .nav-link {
+      padding: 0.75rem 0 !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .nav-item:last-child .nav-link {
+      border-bottom: none;
+    }
+    
+    .navbar-nav {
+      margin-bottom: 1rem !important;
+    }
+  }
+  
+  /* Body padding */
+  body {
+    padding-top: 70px;
+  }
+  
+  @media (min-width: 992px) {
+    body {
+      padding-top: 80px;
+    }
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize Bootstrap collapse properly
+  const navbarToggler = document.querySelector('.navbar-toggler');
+  const navbarCollapse = document.getElementById('navbarCollapse');
+  
+  if (navbarToggler && navbarCollapse) {
+    navbarToggler.addEventListener('click', function() {
+      const expanded = this.getAttribute('aria-expanded') === 'true';
+      this.setAttribute('aria-expanded', !expanded);
+    });
+  }
+});
+</script>
+    <!-- Hero Section -->
+    <section class="py-5">
+        <div class="container py-5">
+            <div class="row align-items-center">
+                <div class="col-lg-6 mb-5 mb-lg-0">
+                                <h1 class="font-display display-4 fw-bold mb-4">
+                        Transform Your Ideas Into <span class="neuro-gradient-text">Powerful AI Prompts</span>
+                    </h1>
+                    <p class="lead mb-4 text-gray-400">
+                        Get better results from ChatGPT, Midjourney, and other AI tools with optimized prompts crafted by NeuroPrompt's AI technology.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3 mt-5">
+                        <a href="#optimizer" class="btn btn-neuro px-5 py-3">
+                            <i class="fas fa-magic me-2"></i> Try Prompt Optimizer
+                        </a>
+                        <a href="#" class="btn btn-outline-light px-5 py-3">
+                            <i class="fas fa-play-circle me-2"></i> Watch Demo
+                        </a>
+                    </div>
+                    <div class="d-flex align-items-center mt-5 pt-3 text-sm text-gray-400">
+                        <div class="d-flex">
+                            <img src="https://randomuser.me/api/portraits/women/44.jpg" class="rounded-circle border-2 border-gray-800" width="40" height="40" alt="User">
+                            <img src="https://randomuser.me/api/portraits/men/32.jpg" class="rounded-circle border-2 border-gray-800 ms-[-15px]" width="40" height="40" alt="User">
+                            <img src="https://randomuser.me/api/portraits/women/68.jpg" class="rounded-circle border-2 border-gray-800 ms-[-15px]" width="40" height="40" alt="User">
+                        </div>
+                        <div class="ms-3">
+                            <div class="fw-medium text-white">Trusted by 10,000+ creators</div>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-star text-yellow-400 me-1"></i>
+                                <span>4.9 (1,200 reviews)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="prompt-card rounded-xl p-1 glow-effect">
+                        <div class="p-4 rounded-lg h-100" style="background: rgba(15, 23, 42, 0.7);">
+                            <div class="d-flex align-items-center mb-4">
+                                <div class="d-flex me-auto">
+                                    <div class="rounded-circle me-2" style="width: 12px; height: 12px; background: #ef4444;"></div>
+                                    <div class="rounded-circle me-2" style="width: 12px; height: 12px; background: #f59e0b;"></div>
+                                    <div class="rounded-circle" style="width: 12px; height: 12px; background: #10b981;"></div>
+                                </div>
+                                <div class="badge badge-platform">
+                                    <i class="fas fa-robot me-1"></i> ChatGPT
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <div class="text-xs font-medium text-gray-400 mb-2">OPTIMIZED PROMPT</div>
+                                <div class="bg-gray-800 p-4 rounded-lg">
+                                    <p class="font-mono text-sm mb-0">
+                                        "Act as a professional copywriter with 10 years of experience. Create a compelling, SEO-optimized blog post introduction about the benefits of intermittent fasting. The tone should be authoritative yet approachable, targeting health-conscious adults aged 30-50. Include statistics from credible sources and address common misconceptions."
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="badge badge-tone">
+                                    <i class="fas fa-sliders-h me-1"></i> Professional Tone
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-light" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy Prompt">
+                                        <i class="far fa-copy"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-light" data-bs-toggle="tooltip" data-bs-placement="top" title="Save Prompt">
+                                        <i class="far fa-bookmark"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-light" data-bs-toggle="tooltip" data-bs-placement="top" title="Share">
+                                        <i class="fas fa-share-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Logo Cloud -->
+    <section class="py-5 bg-gray-900">
+        <div class="container py-4">
+            <div class="text-center text-gray-400 mb-4">TRUSTED BY TEAMS AT</div>
+            <div class="d-flex flex-wrap justify-content-center align-items-center gap-4 gap-lg-5">
+                <img src="https://logo.clearbit.com/spotify.com" alt="Spotify" class="h-8 opacity-60 hover:opacity-100 transition-opacity">
+                <img src="https://logo.clearbit.com/shopify.com" alt="Shopify" class="h-8 opacity-60 hover:opacity-100 transition-opacity">
+                <img src="https://logo.clearbit.com/airbnb.com" alt="Airbnb" class="h-8 opacity-60 hover:opacity-100 transition-opacity">
+                <img src="https://logo.clearbit.com/notion.so" alt="Notion" class="h-8 opacity-60 hover:opacity-100 transition-opacity">
+                <img src="https://logo.clearbit.com/figma.com" alt="Figma" class="h-6 opacity-60 hover:opacity-100 transition-opacity">
+            </div>
+        </div>
+    </section>
+
+    <!-- Prompt Optimizer Section -->
+    <section id="optimizer" class="py-5">
+        <div class="container py-5">
+            <div class="row justify-content-center">
+                <div class="col-lg-10 col-xl-8">
+                    <div class="text-center mb-5">
+                        <span class="badge bg-gray-800 text-white mb-3 px-3 py-2">
+                            <i class="fas fa-wand-magic-sparkles text-neuro-purple me-2"></i> Prompt Optimizer
+                        </span>
+                        <h2 class="font-display fw-bold mb-3">Enhance Your AI Prompts</h2>
+                        <p class="text-gray-400">Enter your basic idea and let NeuroPrompt transform it into a powerful, effective prompt</p>
+                    </div>
+                    
+                    <div class="prompt-card rounded-xl p-1 mb-4">
+                        <div class="p-4 rounded-lg">
+                            <form id="promptForm">
+                                <div class="mb-4">
+                                    <label for="inputPrompt" class="form-label fw-medium mb-3">
+                                        <i class="far fa-lightbulb text-neuro-purple me-2"></i> Your Basic Idea
+                                    </label>
+                                  <style>
+  /* Make ALL text elements white by default */
+  body,
+  input,
+  textarea,
+  select,
+  button,
+  .form-control,
+  .form-control::placeholder,
+  .form-control-custom,
+  .form-control-custom::placeholder {
+    color: white !important;
+  }
+
+  /* Specific styling for your textarea */
+  .form-control-custom {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .form-control-custom:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.1);
+  }
+
+  /* Placeholder text styling */
+  .form-control-custom::placeholder {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+</style>
+
+<textarea class="form-control form-control-custom" id="inputPrompt" rows="4" 
+          placeholder="E.g., 'I need a blog post about productivity'"></textarea>
+                                    <div class="text-end mt-2">
+                                        <small class="text-gray-500" id="inputCounter">0/500</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label for="aiPlatform" class="form-label fw-medium">
+                                            <i class="fas fa-robot text-neuro-blue me-2"></i> AI Platform
+                                        </label>
+                                        <select class="form-select form-control-custom" id="aiPlatform">
+                                            <option value="chatgpt">ChatGPT</option>
+                                            <option value="midjourney">Midjourney</option>
+                                            <option value="dalle">DALL·E</option>
+                                            <option value="stable-diffusion">Stable Diffusion</option>
+                                            <option value="claude">Claude</option>
+                                            <option value="bard">Google Bard</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="toneStyle" class="form-label fw-medium">
+                                            <i class="fas fa-sliders-h text-neuro-pink me-2"></i> Tone/Style
+                                        </label>
+                                        <select class="form-select form-control-custom" id="toneStyle">
+                                            <option value="professional">Professional</option>
+                                            <option value="friendly">Friendly</option>
+                                            <option value="academic">Academic</option>
+                                            <option value="persuasive">Persuasive</option>
+                                            <option value="creative">Creative</option>
+                                            <option value="humorous">Humorous</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-neuro py-3" id="optimizeBtn">
+                                        <i class="fas fa-magic me-2"></i> Optimize Prompt
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="prompt-card rounded-xl p-1 glow-effect" id="resultCard" style="display: none;">
+                        <div class="p-4 rounded-lg">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div>
+                                    <div class="text-xs font-medium text-gray-400 mb-1">OPTIMIZED PROMPT</div>
+                                    <h5 class="neuro-gradient-text mb-0">Your Enhanced Prompt</h5>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-light" id="copyBtn" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to Clipboard">
+                                        <i class="far fa-copy me-1"></i> Copy
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-light" id="newPromptBtn">
+                                        <i class="fas fa-sync-alt me-1"></i> Regenerate
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="bg-gray-800 p-4 rounded-lg mb-4">
+                                <p class="font-mono text-sm mb-0" id="optimizedPrompt"></p>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex gap-2">
+                                    <span class="badge badge-platform" id="platformBadge">
+                                        <i class="fas fa-robot me-1"></i> ChatGPT
+                                    </span>
+                                    <span class="badge badge-tone" id="toneBadge">
+                                        <i class="fas fa-sliders-h me-1"></i> Professional
+                                    </span>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-gray-400" id="charCount">0 characters</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-5 bg-gray-900">
+        <div class="container py-5">
+            <div class="text-center mb-5">
+                <span class="badge bg-gray-800 text-white mb-3 px-3 py-2">
+                    <i class="fas fa-stars text-neuro-purple me-2"></i> Why Choose NeuroPrompt
+                </span>
+                <h2 class="font-display fw-bold mb-3">Supercharge Your AI Workflow</h2>
+                <p class="text-gray-400">Designed for humans who want to get better results from AI tools</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-4">
+                    <div class="prompt-card h-100 rounded-xl p-1">
+                        <div class="p-4 rounded-lg h-100">
+                            <div class="neuro-gradient-bg rounded-lg p-3 mb-4 d-inline-flex">
+                                <i class="fas fa-bolt text-white"></i>
+                            </div>
+                            <h4 class="mb-3">Instant Optimization</h4>
+                            <p class="text-gray-400">
+                                Transform basic ideas into detailed, effective prompts in seconds with our AI-powered optimization.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-4">
+                    <div class="prompt-card h-100 rounded-xl p-1">
+                        <div class="p-4 rounded-lg h-100">
+                            <div class="neuro-gradient-bg rounded-lg p-3 mb-4 d-inline-flex">
+                                <i class="fas fa-shapes text-white"></i>
+                            </div>
+                            <h4 class="mb-3">Platform-Specific</h4>
+                            <p class="text-gray-400">
+                                Get prompts tailored for different AI platforms (ChatGPT, Midjourney, etc.) for optimal results every time.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-4">
+                    <div class="prompt-card h-100 rounded-xl p-1">
+                        <div class="p-4 rounded-lg h-100">
+                            <div class="neuro-gradient-bg rounded-lg p-3 mb-4 d-inline-flex">
+                                <i class="fas fa-sliders-h text-white"></i>
+                            </div>
+                            <h4 class="mb-3">Customizable Tone</h4>
+                            <p class="text-gray-400">
+                                Adjust the tone and style of your prompts to match your brand voice and communication needs.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-4">
+                    <div class="prompt-card h-100 rounded-xl p-1">
+                        <div class="p-4 rounded-lg h-100">
+                            <div class="neuro-gradient-bg rounded-lg p-3 mb-4 d-inline-flex">
+                                <i class="fas fa-history text-white"></i>
+                            </div>
+                            <h4 class="mb-3">Prompt History</h4>
+                            <p class="text-gray-400">
+                                Save and revisit your optimized prompts, with version history to track improvements over time.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-4">
+                    <div class="prompt-card h-100 rounded-xl p-1">
+                        <div class="p-4 rounded-lg h-100">
+                            <div class="neuro-gradient-bg rounded-lg p-3 mb-4 d-inline-flex">
+                                <i class="fas fa-users text-white"></i>
+                            </div>
+                            <h4 class="mb-3">Team Collaboration</h4>
+                            <p class="text-gray-400">
+                                Share prompts with team members and collaborate on perfecting your AI interactions.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 col-lg-4">
+                    <div class="prompt-card h-100 rounded-xl p-1">
+                        <div class="p-4 rounded-lg h-100">
+                            <div class="neuro-gradient-bg rounded-lg p-3 mb-4 d-inline-flex">
+                                <i class="fas fa-chart-line text-white"></i>
+                            </div>
+                            <h4 class="mb-3">Performance Insights</h4>
+                            <p class="text-gray-400">
+                                Get feedback on which prompts perform best and learn how to improve your AI interactions.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="py-5">
+        <div class="container py-5">
+            <div class="text-center mb-5">
+                <span class="badge bg-gray-800 text-white mb-3 px-3 py-2">
+                    <i class="fas fa-quote-left text-neuro-purple me-2"></i> What Users Say
+                </span>
+                <h2 class="font-display fw-bold mb-3">Loved by Creators Worldwide</h2>
+                <p class="text-gray-400">Join thousands of professionals getting better results with NeuroPrompt</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="prompt-card h-100 rounded-xl p-1">
+                        <div class="p-4 rounded-lg h-100">
+                            <div class="d-flex align-items-center mb-4">
+                                <img src="https://randomuser.me/api/portraits/women/43.jpg" class="rounded-circle me-3" width="48" height="48" alt="User">
+                                <div>
+                                    <h5 class="mb-0">Sarah Johnson</h5>
+                                    <small class="text-gray-400">Content Strategist</small>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <i class="fas fa-star text-yellow-400"></i>
+                                <i class="fas fa-star text-yellow-400"></i>
+                                <i class="fas fa-star text-yellow-400"></i>
+                                <i class="fas fa-star text-yellow-400"></i>
+                                <i class="fas fa-star text-yellow-400"></i>
+                            </div>
+                            <p class="text-gray-400">
+                                "NeuroPrompt has transformed how I work with ChatGPT. My prompts now generate exactly what I need, saving me hours of refinement. The tone customization is a game-changer for maintaining brand voice."
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="prompt-card h-100 rounded-xl p-1">
+                        <div class="p-4 rounded-lg h-100">
+                            <div class="d-flex align-items-center mb-4">
+                                <img src="https://randomuser.me/api/portraits/men/65.jpg" class="rounded-circle me-3" width="48" height="48" alt="User">
+                                <div>
+                                    <h5 class="mb-0">Michael Chen</h5>
+                                    <small class="text-gray-400">Digital Artist</small>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <i class="fas fa-star text-yellow-400"></i>
+                                <i class="fas fa-star text-yellow-400"></i>
+                                <i class="fas fa-star text-yellow-400"></i>
+                                <i class="fas fa-star text-yellow-400"></i>
+                                <i class="fas fa-star text-yellow-400"></i>
+                            </div>
+                            <p class="text-gray-400">
+                                "The Midjourney prompts from NeuroPrompt are next-level. I'm getting consistently better results with less trial and error. The platform-specific optimization makes all the difference."
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="prompt-card h-100 rounded-xl p-1">
+                        <div class="p-4 rounded-lg h-100">
+                            <div class="d-flex align-items-center mb-4">
+                                <img src="https://randomuser.me/api/portraits/women/68.jpg" class="rounded-circle me-3" width="48" height="48" alt="User">
+                                <div>
+                                    <h5 class="mb-0">Emma Rodriguez</h5>
+                                    <small class="text-gray-400">Marketing Director</small>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <i class="fas fa-star text-yellow-400"></i>
+                                <i class="fas fa-star text-yellow-400"></i>
+                                <i class="fas fa-star text-yellow-400"></i>
+                                <i class="fas fa-star text-yellow-400"></i>
+                                <i class="fas fa-star-half-alt text-yellow-400"></i>
+                            </div>
+                            <p class="text-gray-400">
+                                "Our team's productivity has skyrocketed since we started using NeuroPrompt. The ability to save and share optimized prompts across the team has standardized our AI outputs."
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-5 neuro-gradient-bg">
+        <div class="container py-5">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <h2 class="font-display fw-bold text-white mb-4">Ready to Transform Your AI Experience?</h2>
+                    <p class="lead text-white opacity-75 mb-5">
+                        Join thousands of creators, marketers, and professionals getting better results with optimized AI prompts
+                    </p>
+                    <div class="d-flex flex-wrap justify-content-center gap-3">
+                        <a href="#optimizer" class="btn btn-light btn-lg px-5 py-3 fw-bold">
+                            <i class="fas fa-magic me-2"></i> Try It Free
+                        </a>
+                        <a href="#" class="btn btn-outline-light btn-lg px-5 py-3">
+                            <i class="fas fa-play-circle me-2"></i> Watch Demo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-5 bg-gray-950">
+        <div class="container py-4">
+            <div class="row">
+                <div class="col-lg-4 mb-5 mb-lg-0">
+                    <a class="d-flex align-items-center mb-4" href="#">
+                        <div class="me-2 p-2 rounded-md neuro-gradient-bg">
+                            <i class="fas fa-brain text-white"></i>
+                        </div>
+                        <span class="font-display text-xl fw-bold neuro-gradient-text">NeuroPrompt</span>
+                    </a>
+                    <p class="text-gray-400 mb-4">
+                        The AI-powered prompt optimizer that helps you get better results from AI tools.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fab fa-discord"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fab fa-github"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fab fa-linkedin"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
+                    <h5 class="text-white mb-4">Product</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-3"><a href="#" class="text-gray-400 hover:text-white transition-colors">Features</a></li>
+                        <li class="mb-3"><a href="#" class="text-gray-400 hover:text-white transition-colors">Pricing</a></li>
+                        <li class="mb-3"><a href="#" class="text-gray-400 hover:text-white transition-colors">Examples</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">API</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
+                    <h5 class="text-white mb-4">Resources</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-3"><a href="#" class="text-gray-400 hover:text-white transition-colors">Blog</a></li>
+                        <li class="mb-3"><a href="#" class="text-gray-400 hover:text-white transition-colors">Documentation</a></li>
+                        <li class="mb-3"><a href="#" class="text-gray-400 hover:text-white transition-colors">Community</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Support</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
+                    <h5 class="text-white mb-4">Company</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-3"><a href="#" class="text-gray-400 hover:text-white transition-colors">About Us</a></li>
+                        <li class="mb-3"><a href="#" class="text-gray-400 hover:text-white transition-colors">Careers</a></li>
+                        <li class="mb-3"><a href="#" class="text-gray-400 hover:text-white transition-colors">Privacy</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Terms</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-12">
+                    <h5 class="text-white mb-4">Stay Updated</h5>
+                    <form>
+                        <div class="mb-3">
+                            <input type="email" class="form-control form-control-custom" placeholder="Your email">
+                        </div>
+                        <button type="submit" class="btn btn-neuro w-100">Subscribe</button>
+                    </form>
+                </div>
+            </div>
+            <hr class="my-5 border-gray-800">
+            <div class="text-center text-gray-400">
+                <small>© 2023 NeuroPrompt. All rights reserved.</small>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script>
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Character counter for input
+        const inputPrompt = document.getElementById('inputPrompt');
+        const inputCounter = document.getElementById('inputCounter');
+        
+        inputPrompt.addEventListener('input', function() {
+            inputCounter.textContent = `${this.value.length}/500`;
+        });
+        
+        // Form submission
+        document.getElementById('promptForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const inputText = inputPrompt.value.trim();
+            const aiPlatform = document.getElementById('aiPlatform').value;
+            const toneStyle = document.getElementById('toneStyle').value;
+            
+            if (!inputText) {
+                alert('Please enter your basic idea or prompt');
+                return;
+            }
+            
+            optimizePrompt(inputText, aiPlatform, toneStyle);
+        });
+        
+        // Regenerate button
+        document.getElementById('newPromptBtn').addEventListener('click', function() {
+            const inputText = inputPrompt.value.trim();
+            const aiPlatform = document.getElementById('aiPlatform').value;
+            const toneStyle = document.getElementById('toneStyle').value;
+            
+            if (inputText) {
+                optimizePrompt(inputText, aiPlatform, toneStyle);
+            }
+        });
+        
+        // Copy button
+        document.getElementById('copyBtn').addEventListener('click', function() {
+            const promptText = document.getElementById('optimizedPrompt').textContent;
+            
+            navigator.clipboard.writeText(promptText).then(() => {
+                const tooltip = bootstrap.Tooltip.getInstance(this);
+                this.innerHTML = '<i class="fas fa-check me-1"></i> Copied!';
+                
+                setTimeout(() => {
+                    this.innerHTML = '<i class="far fa-copy me-1"></i> Copy';
+                    tooltip.hide();
+                }, 2000);
+            });
+        });
+        
+        // Theme toggle (example functionality)
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-bs-theme', newTheme);
+            
+            // Save preference to localStorage
+            localStorage.setItem('theme', newTheme);
+        }
+        
+        // Check for saved theme preference
+        if (localStorage.getItem('theme')) {
+            document.documentElement.setAttribute('data-bs-theme', localStorage.getItem('theme'));
+        }
+        
+        // Optimize prompt function (simulated)
+        function optimizePrompt(inputText, platform, tone) {
+            const resultCard = document.getElementById('resultCard');
+            const optimizedPrompt = document.getElementById('optimizedPrompt');
+            const platformBadge = document.getElementById('platformBadge');
+            const toneBadge = document.getElementById('toneBadge');
+            const charCount = document.getElementById('charCount');
+            const optimizeBtn = document.getElementById('optimizeBtn');
+            
+            // Show loading state
+            optimizeBtn.innerHTML = '<span class="loading-spinner me-2"></span> Optimizing...';
+            optimizeBtn.disabled = true;
+            
+            optimizedPrompt.textContent = "Optimizing your prompt...";
+            resultCard.style.display = 'block';
+            
+            // Platform names for display
+            const platformNames = {
+                'chatgpt': 'ChatGPT',
+                'midjourney': 'Midjourney',
+                'dalle': 'DALL·E',
+                'stable-diffusion': 'Stable Diffusion',
+                'claude': 'Claude',
+                'bard': 'Google Bard'
+            };
+            
+            // Tone names for display
+            const toneNames = {
+                'professional': 'Professional',
+                'friendly': 'Friendly',
+                'academic': 'Academic',
+                'persuasive': 'Persuasive',
+                'creative': 'Creative',
+                'humorous': 'Humorous'
+            };
+            
+            // Simulate API delay
+            setTimeout(() => {
+                let optimizedText = "";
+                
+                if (platform === 'midjourney') {
+                    optimizedText = `A highly detailed ${tone} image of "${inputText}", 4K resolution, dramatic lighting, intricate details, trending on artstation, unreal engine 5 render, cinematic composition --ar 16:9 --v 5`;
+                    
+                    // Add style-specific enhancements
+                    if (tone === 'professional') optimizedText += ", corporate style, clean lines";
+                    else if (tone === 'creative') optimizedText += ", surreal elements, imaginative";
+                    else if (tone === 'humorous') optimizedText += ", whimsical, playful exaggeration";
+                    
+                } else if (platform === 'dalle') {
+                    optimizedText = `A digital art painting of "${inputText}" in a ${tone} style, hyper-detailed, vibrant colors, 8K resolution, trending on artstation, digital illustration`;
+                    
+                } else if (platform === 'stable-diffusion') {
+                    optimizedText = `masterpiece, best quality, ${tone} style: "${inputText}", highly detailed, intricate, dramatic lighting, by famous artists`;
+                    
+                } else {
+                    // Text-based AI platforms
+                    const role = tone === 'academic' ? 'university professor' : 
+                                 tone === 'professional' ? 'industry expert' :
+                                 tone === 'persuasive' ? 'master salesperson' :
+                                 tone === 'creative' ? 'award-winning author' :
+                                 tone === 'humorous' ? 'comedian' : 'helpful assistant';
+                    
+                    optimizedText = `Act as a ${role} with 10 years of experience. ${inputText}. The response should be ${tone} and include specific examples, actionable advice, and address potential follow-up questions. Structure the response with clear headings and bullet points when appropriate.`;
+                    
+                    // Add platform-specific instructions
+                    if (platform === 'claude') optimizedText += "\n\nPlease provide a thorough, thoughtful response in the style characteristic of Claude AI.";
+                    if (platform === 'bard') optimizedText += "\n\nPlease provide a comprehensive response with up-to-date information as you would typically do as Google Bard.";
+                }
+                
+                // Update UI with results
+                optimizedPrompt.textContent = optimizedText;
+                platformBadge.innerHTML = `<i class="fas fa-robot me-1"></i> ${platformNames[platform] || platform}`;
+                toneBadge.innerHTML = `<i class="fas fa-sliders-h me-1"></i> ${toneNames[tone] || tone}`;
+                charCount.textContent = `${optimizedText.length} characters`;
+                
+                // Reset button
+                optimizeBtn.innerHTML = '<i class="fas fa-magic me-2"></i> Optimize Prompt';
+                optimizeBtn.disabled = false;
+                
+                // Scroll to results
+                resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 1500);
+        }
+    </script>
+    <script src="nero.js"></script>
+</body>
+</html>
