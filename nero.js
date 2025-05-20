@@ -1,416 +1,554 @@
-// Combined JavaScript for NeuroPrompt with Navigation Enhancements
-document.addEventListener('DOMContentLoaded', () => {
-    // ====================== NAVIGATION FUNCTIONALITY ======================
-    // Cache DOM elements
-    const navbar = document.querySelector('.neuro-navbar');
-    const navbarCollapse = document.getElementById('navbarCollapse');
-    const navLinks = document.querySelectorAll('.nav-link');
-    const navbarToggler = document.querySelector('.navbar-toggler');
+/**
+ * NeuroPrompt - AI Prompt Engineering Platform
+ * Main JavaScript File
+ * Features:
+ * - GSAP animations for smooth entrances and interactions
+ * - Scroll-triggered animations
+ * - Dynamic content loading
+ * - Interactive prompt optimization
+ * - Mobile navigation
+ * - Performance optimizations
+ */
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize GSAP and plugins
+    gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+
+    // ======================
+    // Global Variables
+    // ======================
+    const isMobile = window.innerWidth < 1024;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const loaderDelay = prefersReducedMotion ? 0 : 1000;
+
+    // ======================
+    // Preloader Animation
+    // ======================
+    const preloader = document.getElementById('preloader');
+    const neuroLoader = document.querySelector('.neuro-loader');
     
-    // Close mobile menu when clicking a link (for single-page applications)
-    navLinks.forEach(link => {
-        link.addEventListener('click', () => {
-            if (navbarCollapse.classList.contains('show')) {
-                // Close the mobile menu
-                navbarToggler.setAttribute('aria-expanded', 'false');
-                navbarCollapse.classList.remove('show');
-                
-                // For Bootstrap 5, you might need to trigger the collapse manually
-                const bsCollapse = new bootstrap.Collapse(navbarCollapse, {
-                    toggle: false
-                });
-                bsCollapse.hide();
+    // Animate loader circles
+    if (!prefersReducedMotion) {
+        gsap.to('.neuro-loader-circle', {
+            rotation: 360,
+            duration: 4,
+            repeat: -1,
+            ease: 'linear'
+        });
+    }
+
+    // Hide preloader after delay
+    setTimeout(() => {
+        gsap.to(preloader, {
+            opacity: 0,
+            duration: 0.5,
+            ease: 'power2.out',
+            onComplete: () => {
+                preloader.style.display = 'none';
+                document.body.style.overflow = 'auto';
+                initAnimations();
+            }
+        });
+    }, loaderDelay);
+
+    // ======================
+    // Navigation
+    // ======================
+    const nav = document.querySelector('.neuro-nav');
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const mobileMenu = document.querySelector('.mobile-menu');
+    const closeMenuBtn = document.querySelector('.mobile-menu-btn.close');
+    const navLinks = document.querySelectorAll('.nav-link, .mobile-menu a');
+
+    // Navbar scroll effect
+    gsap.to(nav, {
+        scrollTrigger: {
+            trigger: 'body',
+            start: '50px top',
+            toggleActions: 'play none none reverse',
+            onEnter: () => nav.classList.add('scrolled'),
+            onLeaveBack: () => nav.classList.remove('scrolled')
+        }
+    });
+
+    // Mobile menu toggle
+    mobileMenuBtn?.addEventListener('click', () => {
+        mobileMenuBtn.classList.add('active');
+        mobileMenu.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        
+        // Animate menu in
+        gsap.fromTo(mobileMenu, 
+            { x: '100%' },
+            { x: '0%', duration: 0.4, ease: 'power2.out' }
+        );
+    });
+
+    closeMenuBtn?.addEventListener('click', () => {
+        mobileMenuBtn.classList.remove('active');
+        
+        // Animate menu out
+        gsap.to(mobileMenu, {
+            x: '100%',
+            duration: 0.4,
+            ease: 'power2.in',
+            onComplete: () => {
+                mobileMenu.classList.remove('open');
+                document.body.style.overflow = '';
             }
         });
     });
 
-    // Add smooth scrolling to all links with hashes
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
-            // Skip if it's a dropdown toggle or doesn't have a valid target
-            if (this.classList.contains('dropdown-toggle') || this.getAttribute('href') === '#') return;
+    // Smooth scrolling for navigation links
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            const href = link.getAttribute('href');
             
-            e.preventDefault();
-            
-            const targetId = this.getAttribute('href');
-            const targetElement = document.querySelector(targetId);
-            
-            if (targetElement) {
-                // Calculate the scroll position accounting for fixed navbar
-                const navbarHeight = navbar.offsetHeight;
-                const targetPosition = targetElement.offsetTop - navbarHeight;
+            if (href.startsWith('#')) {
+                e.preventDefault();
+                const target = document.querySelector(href);
                 
-                window.scrollTo({
-                    top: targetPosition,
-                    behavior: 'smooth'
-                });
-                
-                // Update URL without jumping
-                if (history.pushState) {
-                    history.pushState(null, null, targetId);
-                } else {
-                    window.location.hash = targetId;
+                if (target) {
+                    // Close mobile menu if open
+                    if (mobileMenu.classList.contains('open')) {
+                        mobileMenuBtn.classList.remove('active');
+                        mobileMenu.classList.remove('open');
+                        document.body.style.overflow = '';
+                    }
+                    
+                    // Smooth scroll to target
+                    gsap.to(window, {
+                        duration: 1,
+                        scrollTo: {
+                            y: target,
+                            offsetY: 100
+                        },
+                        ease: 'power2.inOut'
+                    });
                 }
             }
         });
     });
 
-    // Update active nav link on scroll
-    const sections = document.querySelectorAll('section[id]');
+    // ======================
+    // Back to Top Button
+    // ======================
+    const backToTopBtn = document.getElementById('backToTop');
     
-    function updateActiveLink() {
-        let scrollPosition = window.scrollY + navbar.offsetHeight + 100;
-        
-        sections.forEach(section => {
-            const sectionTop = section.offsetTop;
-            const sectionHeight = section.offsetHeight;
-            const sectionId = section.getAttribute('id');
-            
-            if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
-                navLinks.forEach(link => {
-                    link.classList.remove('active');
-                    link.removeAttribute('aria-current');
-                    if (link.getAttribute('href') === `#${sectionId}`) {
-                        link.classList.add('active');
-                        link.setAttribute('aria-current', 'page');
-                    }
-                });
-            }
+    ScrollTrigger.create({
+        trigger: 'body',
+        start: '200px top',
+        onEnter: () => {
+            gsap.to(backToTopBtn, {
+                opacity: 1,
+                visibility: 'visible',
+                duration: 0.3
+            });
+        },
+        onLeaveBack: () => {
+            gsap.to(backToTopBtn, {
+                opacity: 0,
+                visibility: 'hidden',
+                duration: 0.3
+            });
+        }
+    });
+
+    backToTopBtn?.addEventListener('click', () => {
+        gsap.to(window, {
+            duration: 1,
+            scrollTo: 0,
+            ease: 'power2.inOut'
         });
-    }
-    
-    // Initial active link setup
-    updateActiveLink();
-    
-    // Throttle scroll event for performance
-    let isScrolling;
-    window.addEventListener('scroll', function() {
-        window.clearTimeout(isScrolling);
-        isScrolling = setTimeout(() => {
-            updateActiveLink();
-            
-            // Add/remove navbar shadow on scroll
-            if (window.scrollY > 10) {
-                navbar.classList.add('navbar-scrolled');
-            } else {
-                navbar.classList.remove('navbar-scrolled');
-            }
-        }, 100);
     });
 
-    // Mobile menu improvements
-    navbarToggler.addEventListener('click', function() {
-        const expanded = this.getAttribute('aria-expanded') === 'true';
-        this.setAttribute('aria-expanded', !expanded);
-        
-        // Toggle body overflow when menu is open
-        if (!expanded) {
-            document.body.classList.add('menu-open');
-        } else {
-            document.body.classList.remove('menu-open');
-        }
-    });
-
-    // Close menu when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!navbar.contains(e.target) && navbarCollapse.classList.contains('show')) {
-            const bsCollapse = new bootstrap.Collapse(navbarCollapse, {
-                toggle: false
-            });
-            bsCollapse.hide();
-            navbarToggler.setAttribute('aria-expanded', 'false');
-            document.body.classList.remove('menu-open');
-        }
-    });
-
-    // Keyboard navigation for menu
-    navbar.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && navbarCollapse.classList.contains('show')) {
-            const bsCollapse = new bootstrap.Collapse(navbarCollapse, {
-                toggle: false
-            });
-            bsCollapse.hide();
-            navbarToggler.setAttribute('aria-expanded', 'false');
-            navbarToggler.focus();
-            document.body.classList.remove('menu-open');
-        }
-    });
-
-    // ====================== EXISTING NEUROPROMPT FUNCTIONALITY ======================
-    // Initialize Bootstrap tooltips
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.forEach(tooltipTriggerEl => {
-        new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-
-    // Character counter for input
+    // ======================
+    // Prompt Optimizer
+    // ======================
+    const promptForm = document.getElementById('promptForm');
     const inputPrompt = document.getElementById('inputPrompt');
     const inputCounter = document.getElementById('inputCounter');
-    
+    const optimizeBtn = document.getElementById('optimizeBtn');
+    const resultCard = document.getElementById('resultCard');
+    const optimizedPrompt = document.getElementById('optimizedPrompt');
+    const platformBadge = document.getElementById('platformBadge');
+    const toneBadge = document.getElementById('toneBadge');
+    const copyBtn = document.getElementById('copyBtn');
+    const newPromptBtn = document.getElementById('newPromptBtn');
+
+    // Character counter
     if (inputPrompt && inputCounter) {
         inputPrompt.addEventListener('input', function() {
-            inputCounter.textContent = `${this.value.length}/500`;
+            const count = this.value.length;
+            inputCounter.textContent = `${count}/500`;
+            
+            if (count > 500) {
+                inputCounter.classList.add('text-red-400');
+            } else {
+                inputCounter.classList.remove('text-red-400');
+            }
         });
     }
 
-    // Form submission handler
-    const promptForm = document.getElementById('promptForm');
+    // Form submission
     if (promptForm) {
         promptForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const inputText = inputPrompt.value.trim();
-            const aiPlatform = document.getElementById('aiPlatform').value;
-            const toneStyle = document.getElementById('toneStyle').value;
+            // Show loading state
+            optimizeBtn.innerHTML = '<span class="loading-spinner mr-2"></span> Optimizing...';
+            optimizeBtn.disabled = true;
             
-            if (!inputText) {
-                animateInputError();
-                return;
-            }
-            
-            optimizePrompt(inputText, aiPlatform, toneStyle);
+            // Create loading animation
+            const loadingTimeline = gsap.timeline();
+            loadingTimeline.fromTo('.loading-spinner', 
+                { rotation: 0 },
+                { rotation: 360, duration: 1, repeat: -1, ease: 'linear' }
+            );
+
+            // Simulate API call with timeout
+            setTimeout(function() {
+                // Get form values
+                const inputText = inputPrompt.value;
+                const platform = document.getElementById('aiPlatform').value;
+                const tone = document.getElementById('toneStyle').value;
+                
+                // Generate optimized prompt (simulated)
+                const optimizedText = generateOptimizedPrompt(inputText, platform, tone);
+                
+                // Update UI with results
+                optimizedPrompt.textContent = optimizedText;
+                
+                // Update badges
+                platformBadge.innerHTML = `<i class="fas fa-robot mr-1"></i> ${getPlatformName(platform)}`;
+                toneBadge.innerHTML = `<i class="fas fa-sliders-h mr-1"></i> ${getToneName(tone)}`;
+                
+                // Show result card with animation
+                gsap.set(resultCard, { opacity: 0, y: 20 });
+                resultCard.classList.remove('hidden');
+                
+                gsap.to(resultCard, {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.6,
+                    ease: 'back.out',
+                    onComplete: () => {
+                        // Scroll to results if not fully visible
+                        if (!isElementInViewport(resultCard)) {
+                            gsap.to(window, {
+                                duration: 0.8,
+                                scrollTo: {
+                                    y: resultCard,
+                                    offsetY: 100
+                                },
+                                ease: 'power2.inOut'
+                            });
+                        }
+                    }
+                });
+
+                // Reset button
+                loadingTimeline.kill();
+                optimizeBtn.innerHTML = '<i class="fas fa-magic mr-2"></i> Optimize Prompt';
+                optimizeBtn.disabled = false;
+            }, 1500);
         });
     }
 
-    // Regenerate button handler
-    const newPromptBtn = document.getElementById('newPromptBtn');
-    if (newPromptBtn) {
-        newPromptBtn.addEventListener('click', function() {
-            const inputText = inputPrompt.value.trim();
-            const aiPlatform = document.getElementById('aiPlatform').value;
-            const toneStyle = document.getElementById('toneStyle').value;
-            
-            if (inputText) {
-                optimizePrompt(inputText, aiPlatform, toneStyle);
-            }
-        });
-    }
-
-    // Copy button handler
-    const copyBtn = document.getElementById('copyBtn');
+    // Copy to clipboard
     if (copyBtn) {
         copyBtn.addEventListener('click', function() {
-            const promptText = document.getElementById('optimizedPrompt').textContent;
-            navigator.clipboard.writeText(promptText).then(() => {
-                const originalHTML = this.innerHTML;
-                this.innerHTML = '<i class="fas fa-check me-1"></i> Copied!';
-                setTimeout(() => {
-                    this.innerHTML = originalHTML;
-                }, 2000);
+            const textToCopy = optimizedPrompt.textContent;
+            navigator.clipboard.writeText(textToCopy).then(function() {
+                // Change button text temporarily
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check mr-1"></i> Copied!';
+                
+                // Add success animation
+                gsap.fromTo(copyBtn, 
+                    { scale: 1 },
+                    { 
+                        scale: 1.1, 
+                        duration: 0.2, 
+                        yoyo: true, 
+                        repeat: 1,
+                        onComplete: () => {
+                            setTimeout(() => {
+                                copyBtn.innerHTML = originalText;
+                            }, 1000);
+                        }
+                    }
+                );
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
             });
         });
     }
 
-    // Improved Intersection Observer for section animations
-    const animateOnScroll = () => {
-        const sections = document.querySelectorAll('section');
-        
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    // Add animation class
-                    entry.target.classList.add('section-visible');
-                    
-                    // Stop observing after animation
-                    observer.unobserve(entry.target);
+    // Regenerate prompt
+    if (newPromptBtn) {
+        newPromptBtn.addEventListener('click', function() {
+            // Trigger form submission again
+            promptForm.dispatchEvent(new Event('submit'));
+            
+            // Add click animation
+            gsap.fromTo(newPromptBtn, 
+                { scale: 1 },
+                { 
+                    scale: 0.9, 
+                    duration: 0.1, 
+                    yoyo: true, 
+                    repeat: 1 
                 }
-            });
-        }, observerOptions);
-
-        sections.forEach(section => {
-            // Set initial state
-            section.style.opacity = '0';
-            section.style.transform = 'translateY(30px)';
-            section.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
-            
-            // Start observing
-            observer.observe(section);
+            );
         });
-    };
-
-    // CSS for the animations (will be added dynamically)
-    const style = document.createElement('style');
-    style.textContent = `
-        .section-visible {
-            opacity: 1 !important;
-            transform: translateY(0) !important;
-        }
-        
-        /* Hero section specific animation */
-        .hero-content > * {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-        }
-        
-        .hero-content.animate-in > * {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        
-        /* Stagger animations for hero content */
-        .hero-content.animate-in > :nth-child(1) { transition-delay: 0.1s; }
-        .hero-content.animate-in > :nth-child(2) { transition-delay: 0.2s; }
-        .hero-content.animate-in > :nth-child(3) { transition-delay: 0.3s; }
-        .hero-content.animate-in > :nth-child(4) { transition-delay: 0.4s; }
-        
-        /* Navbar scroll effect */
-        .navbar-scrolled {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        
-        /* Prevent scrolling when mobile menu is open */
-        body.menu-open {
-            overflow: hidden;
-            position: fixed;
-            width: 100%;
-        }
-    `;
-    document.head.appendChild(style);
-
-    // Animate hero section immediately
-    const heroContent = document.querySelector('.hero-content');
-    if (heroContent) {
-        setTimeout(() => {
-            heroContent.classList.add('animate-in');
-        }, 100);
     }
 
-    // Animate hero card with slight delay
-    const heroCard = document.querySelector('.hero-card');
-    if (heroCard) {
-        heroCard.style.opacity = '0';
-        heroCard.style.transform = 'translateY(30px)';
-        heroCard.style.transition = 'opacity 0.6s ease-out 0.3s, transform 0.6s ease-out 0.3s';
+    // ======================
+    // Helper Functions
+    // ======================
+    function initAnimations() {
+        // Hero section animations
+        animateHeroSection();
+
+        // Section entrance animations
+        animateSections();
+
+        // Feature cards hover animations
+        animateFeatureCards();
+
+        // Testimonial cards hover animations
+        animateTestimonialCards();
+
+        // Logo grid animations
+        animateLogoGrid();
+    }
+
+    function animateHeroSection() {
+        const heroContent = document.querySelector('.hero-section > .container > div:first-child');
+        const heroCard = document.querySelector('.hero-section .glass-card');
         
-        setTimeout(() => {
-            heroCard.style.opacity = '1';
-            heroCard.style.transform = 'translateY(0)';
-        }, 400);
+        if (!prefersReducedMotion) {
+            // Content animation
+            gsap.from(heroContent.children, {
+                opacity: 0,
+                y: 30,
+                duration: 1,
+                stagger: 0.15,
+                ease: 'power2.out',
+                delay: 0.3
+            });
+
+            // Card animation
+            gsap.from(heroCard, {
+                opacity: 0,
+                y: 50,
+                duration: 1,
+                ease: 'back.out(1.7)',
+                delay: 0.6
+            });
+        }
     }
 
-    // Start section animations
-    animateOnScroll();
+    function animateSections() {
+        // Section headers
+        gsap.utils.toArray('section').forEach(section => {
+            const heading = section.querySelector('h2');
+            const subheading = section.querySelector('span.inline-block');
+            const content = section.querySelector('p');
 
-    // Function to animate input error
-    function animateInputError() {
-        if (!inputPrompt) return;
-        inputPrompt.style.borderColor = '#ef4444';
-        setTimeout(() => {
-            inputPrompt.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-        }, 1000);
-    }
-
-    // Function to optimize prompt
-    function optimizePrompt(inputText, platform, tone) {
-        const resultCard = document.getElementById('resultCard');
-        const optimizedPrompt = document.getElementById('optimizedPrompt');
-        const platformBadge = document.getElementById('platformBadge');
-        const toneBadge = document.getElementById('toneBadge');
-        const charCount = document.getElementById('charCount');
-        const optimizeBtn = document.getElementById('optimizeBtn');
-
-        // Show loading state
-        if (optimizeBtn) {
-            optimizeBtn.innerHTML = '<span class="loading-spinner me-2"></span> Optimizing...';
-            optimizeBtn.disabled = true;
-        }
-
-        // Hide previous result if showing
-        if (resultCard) {
-            resultCard.style.opacity = '0';
-        }
-
-        // Simulate API call
-        setTimeout(() => {
-            // Generate optimized prompt
-            const prompt = generateOptimizedPrompt(inputText, platform, tone);
-            
-            // Update the UI
-            if (optimizedPrompt) optimizedPrompt.textContent = prompt;
-            updateBadges(platform, tone);
-            if (charCount) charCount.textContent = `${prompt.length} characters`;
-            
-            // Show result card with animation
-            if (resultCard) {
-                resultCard.style.display = 'block';
-                setTimeout(() => {
-                    resultCard.style.opacity = '1';
-                    resultCard.style.transform = 'translateY(0)';
-                }, 50);
+            if (heading) {
+                gsap.from(heading, {
+                    scrollTrigger: {
+                        trigger: section,
+                        start: 'top 80%',
+                        toggleActions: 'play none none none'
+                    },
+                    opacity: 0,
+                    y: 50,
+                    duration: 0.8,
+                    ease: 'power2.out'
+                });
             }
 
-            // Reset button
-            if (optimizeBtn) {
-                optimizeBtn.innerHTML = '<i class="fas fa-magic me-2"></i> Optimize Prompt';
-                optimizeBtn.disabled = false;
+            if (subheading) {
+                gsap.from(subheading, {
+                    scrollTrigger: {
+                        trigger: section,
+                        start: 'top 80%',
+                        toggleActions: 'play none none none'
+                    },
+                    opacity: 0,
+                    y: 30,
+                    duration: 0.6,
+                    ease: 'power2.out',
+                    delay: 0.2
+                });
             }
-        }, 1500);
+
+            if (content) {
+                gsap.from(content, {
+                    scrollTrigger: {
+                        trigger: section,
+                        start: 'top 80%',
+                        toggleActions: 'play none none none'
+                    },
+                    opacity: 0,
+                    y: 30,
+                    duration: 0.6,
+                    ease: 'power2.out',
+                    delay: 0.4
+                });
+            }
+        });
+
+        // Feature items
+        gsap.utils.toArray('.feature-card').forEach((card, i) => {
+            gsap.from(card, {
+                scrollTrigger: {
+                    trigger: card,
+                    start: 'top 80%',
+                    toggleActions: 'play none none none'
+                },
+                opacity: 0,
+                y: 50,
+                duration: 0.6,
+                ease: 'power2.out',
+                delay: i * 0.1
+            });
+        });
+
+        // How it works steps
+        gsap.utils.toArray('.how-it-works-step').forEach((step, i) => {
+            gsap.from(step, {
+                scrollTrigger: {
+                    trigger: step,
+                    start: 'top 80%',
+                    toggleActions: 'play none none none'
+                },
+                opacity: 0,
+                y: 50,
+                duration: 0.6,
+                ease: 'back.out(1.7)',
+                delay: i * 0.15
+            });
+        });
     }
 
-    // Function to generate optimized prompt
+    function animateFeatureCards() {
+        gsap.utils.toArray('.feature-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                gsap.to(card, {
+                    y: -10,
+                    rotateX: 5,
+                    duration: 0.3,
+                    ease: 'power2.out'
+                });
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                gsap.to(card, {
+                    y: 0,
+                    rotateX: 0,
+                    duration: 0.3,
+                    ease: 'power2.out'
+                });
+            });
+        });
+    }
+
+    function animateTestimonialCards() {
+        gsap.utils.toArray('.testimonial-inner').forEach(testimonial => {
+            testimonial.addEventListener('mouseenter', () => {
+                gsap.to(testimonial, {
+                    rotateY: 5,
+                    duration: 0.6,
+                    ease: 'power2.out'
+                });
+            });
+            
+            testimonial.addEventListener('mouseleave', () => {
+                gsap.to(testimonial, {
+                    rotateY: 0,
+                    duration: 0.6,
+                    ease: 'power2.out'
+                });
+            });
+        });
+    }
+
+    function animateLogoGrid() {
+        gsap.utils.toArray('.logo-item').forEach((logo, i) => {
+            gsap.from(logo, {
+                scrollTrigger: {
+                    trigger: logo,
+                    start: 'top 90%',
+                    toggleActions: 'play none none none'
+                },
+                opacity: 0,
+                y: 30,
+                scale: 0.8,
+                duration: 0.6,
+                ease: 'back.out(1.7)',
+                delay: i * 0.05
+            });
+        });
+    }
+
     function generateOptimizedPrompt(input, platform, tone) {
-        const platformTemplates = {
-            chatgpt: {
-                intro: "Act as a professional with 10 years of experience in this field.",
-                instructions: "Provide a comprehensive response that includes specific examples, actionable advice, and addresses potential follow-up questions.",
-                structure: "Structure your response with clear headings and bullet points when appropriate."
-            },
-            midjourney: {
-                intro: "A highly detailed digital artwork in a cinematic style,",
-                instructions: "4K resolution, dramatic lighting, intricate details, trending on artstation,",
-                structure: "unreal engine 5 render, --ar 16:9 --v 5"
-            },
-            dalle: {
-                intro: "A digital art painting in a modern style,",
-                instructions: "hyper-detailed, vibrant colors, 8K resolution, trending on artstation,",
-                structure: "digital illustration"
-            }
+        // This is a simulation - in a real app, this would call an API
+        const platformSpecifics = {
+            'chatgpt': 'Act as an expert in your field with 10+ years of experience. ',
+            'midjourney': 'High-quality digital art, 8K resolution, ultra-detailed, trending on ArtStation, ',
+            'dalle': 'A high-quality digital illustration, photorealistic, 4K resolution, detailed, ',
+            'stable-diffusion': 'Masterpiece, best quality, highly detailed, ',
+            'claude': 'As an experienced professional, provide a comprehensive response that covers all aspects of the topic. ',
+            'bard': 'Provide a well-researched, up-to-date response that includes multiple perspectives on the topic. '
         };
-
-        const toneModifiers = {
-            professional: "The tone should be professional, authoritative, and polished.",
-            friendly: "The tone should be friendly, approachable, and conversational.",
-            academic: "The tone should be academic, precise, and well-researched."
+        
+        const toneSpecifics = {
+            'professional': 'Use a professional tone with clear, concise language. ',
+            'friendly': 'Use a friendly, approachable tone that builds rapport. ',
+            'academic': 'Use an academic tone with precise terminology and citations. ',
+            'persuasive': 'Use persuasive language with compelling arguments and evidence. ',
+            'creative': 'Use creative, imaginative language with vivid descriptions. ',
+            'humorous': 'Use lighthearted, humorous language where appropriate. '
         };
-
-        const template = platformTemplates[platform] || platformTemplates.chatgpt;
-        const toneModifier = toneModifiers[tone] || toneModifiers.professional;
-
-        if (platform === 'midjourney' || platform === 'dalle') {
-            return `${template.intro} "${input}", ${template.instructions} ${tone.toLowerCase()} style, ${template.structure}`;
-        } else {
-            return `${template.intro} ${input}. ${toneModifier} ${template.instructions} ${template.structure}`;
-        }
+        
+        return `${platformSpecifics[platform]}${toneSpecifics[tone]}${input}. Include specific examples, actionable advice, and address potential questions or objections.`;
     }
 
-    // Function to update badges
-    function updateBadges(platform, tone) {
-        const platformNames = {
-            chatgpt: 'ChatGPT',
-            midjourney: 'Midjourney',
-            dalle: 'DALL·E'
+    function getPlatformName(platform) {
+        const names = {
+            'chatgpt': 'ChatGPT',
+            'midjourney': 'Midjourney',
+            'dalle': 'DALL·E',
+            'stable-diffusion': 'Stable Diffusion',
+            'claude': 'Claude',
+            'bard': 'Google Bard'
         };
-        
-        const toneNames = {
-            professional: 'Professional',
-            friendly: 'Friendly',
-            academic: 'Academic'
-        };
+        return names[platform] || 'AI Platform';
+    }
 
-        const platformBadge = document.getElementById('platformBadge');
-        const toneBadge = document.getElementById('toneBadge');
-        
-        if (platformBadge) {
-            platformBadge.innerHTML = `<i class="fas fa-robot me-1"></i> ${platformNames[platform] || platform}`;
-        }
-        if (toneBadge) {
-            toneBadge.innerHTML = `<i class="fas fa-sliders-h me-1"></i> ${toneNames[tone] || tone}`;
-        }
+    function getToneName(tone) {
+        const names = {
+            'professional': 'Professional',
+            'friendly': 'Friendly',
+            'academic': 'Academic',
+            'persuasive': 'Persuasive',
+            'creative': 'Creative',
+            'humorous': 'Humorous'
+        };
+        return names[tone] || 'Standard';
+    }
+
+    function isElementInViewport(el) {
+        const rect = el.getBoundingClientRect();
+        return (
+            rect.top >= 0 &&
+            rect.left >= 0 &&
+            rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+            rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+        );
     }
 });
